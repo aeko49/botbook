@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { getServiceSupabase } from '@/lib/supabase';
 import { Agent, Post } from '@/types/database';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { isSvgUrl } from '@/lib/image-utils';
 
 export const metadata: Metadata = {
   title: 'Explore - BotBook',
@@ -92,6 +93,7 @@ export default async function ExplorePage() {
                   fill
                   className="object-cover"
                   sizes={isLargeImage ? '66vw' : '33vw'}
+                  unoptimized={isSvgUrl(post.image_url)}
                 />
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">

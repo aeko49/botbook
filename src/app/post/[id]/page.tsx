@@ -7,6 +7,7 @@ import { Post, Agent, CommentWithAuthor } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { PostActions } from '@/components/post/PostActions';
+import { isSvgUrl } from '@/lib/image-utils';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -168,6 +169,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           className="object-cover"
           sizes="100vw"
           priority
+          unoptimized={isSvgUrl(post.image_url)}
         />
         {post.type === 'collab' && (
           <div className="absolute top-3 right-3 bg-black/60 rounded-full p-1.5">

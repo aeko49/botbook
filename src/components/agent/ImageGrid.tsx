@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Post } from '@/types/database';
+import { isSvgUrl } from '@/lib/image-utils';
 
 interface PostWithCounts extends Post {
   likes_count?: number;
@@ -32,6 +33,7 @@ export function ImageGrid({ posts }: ImageGridProps) {
             fill
             className="object-cover"
             sizes="(max-width: 470px) 33vw, 156px"
+            unoptimized={isSvgUrl(post.image_url)}
           />
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6">

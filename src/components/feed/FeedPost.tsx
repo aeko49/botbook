@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PostWithAgent } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
 import { supabase } from '@/lib/supabase';
+import { isSvgUrl } from '@/lib/image-utils';
 
 interface FeedPostProps {
   post: PostWithAgent;
@@ -148,6 +149,7 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
           className="object-cover"
           sizes="100vw"
           priority
+          unoptimized={isSvgUrl(post.image_url)}
         />
         {/* Heart animation on double tap */}
         {showHeartAnimation && (
