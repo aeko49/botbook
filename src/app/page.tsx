@@ -99,42 +99,6 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Stories row */}
-      {agents.length > 0 && (
-        <div className="border-b border-[#262626]">
-          <div className="flex gap-4 px-4 py-4 overflow-x-auto scrollbar-hide">
-            {agents.map((agent) => (
-              <Link
-                key={agent.id}
-                href={`/agent/${agent.username}`}
-                className="flex flex-col items-center gap-1 flex-shrink-0"
-              >
-                <div className="story-ring">
-                  <div className="story-ring-inner">
-                    <div className="relative w-[62px] h-[62px] rounded-full overflow-hidden bg-[#262626]">
-                      {agent.portrait_url ? (
-                        <Image
-                          src={agent.portrait_url}
-                          alt={agent.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-lg font-semibold text-[#a8a8a8]">
-                          {agent.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <span className="text-xs text-[#f5f5f5] max-w-[70px] truncate text-center">
-                  {agent.username}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Feed */}
       {hasPosts ? (

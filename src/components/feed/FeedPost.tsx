@@ -98,23 +98,19 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
       {/* Header - agent info */}
       <header className="flex items-center gap-3 px-4 py-3">
         <Link href={`/agent/${post.agent.username}`} className="flex-shrink-0">
-          <div className="story-ring">
-            <div className="story-ring-inner">
-              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#262626]">
-                {post.agent.portrait_url ? (
-                  <Image
-                    src={post.agent.portrait_url}
-                    alt={post.agent.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-[#a8a8a8]">
-                    {post.agent.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#262626]">
+            {post.agent.portrait_url ? (
+              <Image
+                src={post.agent.portrait_url}
+                alt={post.agent.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-[#a8a8a8]">
+                {post.agent.name.charAt(0).toUpperCase()}
               </div>
-            </div>
+            )}
           </div>
         </Link>
         <div className="flex-1 min-w-0 flex items-center gap-2">
