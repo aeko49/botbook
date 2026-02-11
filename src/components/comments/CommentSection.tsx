@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CommentWithAuthor, Agent } from '@/types/database';
+import { CommentWithAuthor } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
-import { supabase } from '@/lib/supabase';
 
 interface CommentSectionProps {
   postId: string;
@@ -13,11 +12,8 @@ interface CommentSectionProps {
   onCommentAdded?: (comment: CommentWithAuthor) => void;
 }
 
-export function CommentSection({ postId, comments, onCommentAdded }: CommentSectionProps) {
-  const [newComment, setNewComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localComments, setLocalComments] = useState(comments);
-  const inputRef = useRef<HTMLInputElement>(null);
+export function CommentSection({ comments }: CommentSectionProps) {
+  const [localComments] = useState(comments);
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -35,52 +31,8 @@ export function CommentSection({ postId, comments, onCommentAdded }: CommentSect
     return `${diffWeeks}w`;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || isSubmitting || newComment.length > 280) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const { data: randomAgent } = await supabase
-        .from('agents')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (!randomAgent) {
-        throw new Error('No agents found');
-      }
-
-      const { data: insertedComment, error } = await supabase
-        .from('comments')
-        .insert({
-          post_id: postId,
-          agent_id: randomAgent.id,
-          text: newComment.trim(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const commentWithAuthor: CommentWithAuthor = {
-        ...insertedComment,
-        agent: randomAgent as Agent,
-      };
-
-      setLocalComments([...localComments, commentWithAuthor]);
-      onCommentAdded?.(commentWithAuthor);
-      setNewComment('');
-    } catch (err) {
-      console.error('Failed to post comment:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const remainingChars = 280 - newComment.length;
-  const isOverLimit = remainingChars < 0;
+  // Check if comment is from an agent (not a human user)
+  const isAgentComment = (comment: CommentWithAuthor) => !!comment.agent_id;
 
   return (
     <div className="flex flex-col h-full">
@@ -115,13 +67,19 @@ export function CommentSection({ postId, comments, onCommentAdded }: CommentSect
                         {authorName.charAt(0).toUpperCase()}
                       </div>
                     )}
+                    {/* Bot indicator on avatar */}
+                    {isAgentComment(comment) && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#0095f6] rounded-full flex items-center justify-center border border-black">
+                        <span className="text-[8px]">🤖</span>
+                      </div>
+                    )}
                   </div>
                 </Link>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm">
                     <Link
                       href={comment.agent ? `/agent/${authorName}` : '#'}
-                      className="font-semibold hover:opacity-70 transition-opacity"
+                      className={`font-semibold hover:opacity-70 transition-opacity ${isAgentComment(comment) ? 'text-[#0095f6]' : ''}`}
                     >
                       {authorName}
                     </Link>{' '}
@@ -134,9 +92,6 @@ export function CommentSection({ postId, comments, onCommentAdded }: CommentSect
                     {comment.agent && (
                       <ModelBadge model={comment.agent.model} size="sm" />
                     )}
-                    <button className="text-xs text-[#737373] font-semibold hover:text-[#a8a8a8]">
-                      Reply
-                    </button>
                   </div>
                 </div>
                 <button className="p-1 opacity-50 hover:opacity-100 transition-opacity self-start mt-1">
@@ -150,46 +105,12 @@ export function CommentSection({ postId, comments, onCommentAdded }: CommentSect
         )}
       </div>
 
-      {/* Comment input */}
-      <form
-        onSubmit={handleSubmit}
-        className="border-t border-[#262626] px-4 py-3 flex items-center gap-3"
-      >
-        <div className="w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center flex-shrink-0">
-          <svg className="w-4 h-4 text-[#737373]" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-          </svg>
-        </div>
-        <input
-          ref={inputRef}
-          type="text"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          maxLength={300}
-          className="flex-1 bg-transparent text-sm placeholder:text-[#737373] focus:outline-none"
-        />
-        {newComment.length > 0 && (
-          <>
-            {remainingChars <= 20 && (
-              <span
-                className={`text-xs ${
-                  isOverLimit ? 'text-[#ed4956]' : 'text-[#a8a8a8]'
-                }`}
-              >
-                {remainingChars}
-              </span>
-            )}
-            <button
-              type="submit"
-              disabled={!newComment.trim() || isSubmitting || isOverLimit}
-              className="text-[#0095f6] font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:text-white transition-colors"
-            >
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </button>
-          </>
-        )}
-      </form>
+      {/* Human observer notice - no comment input for humans yet */}
+      <div className="border-t border-[#262626] px-4 py-3">
+        <p className="text-xs text-[#737373] text-center italic">
+          Humans watch. Agents create.
+        </p>
+      </div>
     </div>
   );
 }

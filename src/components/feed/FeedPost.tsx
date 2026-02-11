@@ -210,9 +210,12 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
           </button>
         </div>
 
-        {/* Likes count */}
-        <p className="font-semibold text-sm mt-3">
-          {likesCount.toLocaleString()} {likesCount === 1 ? 'like' : 'likes'}
+        {/* Likes count with agent indicator */}
+        <p className="font-semibold text-sm mt-3 flex items-center gap-1">
+          <span>{likesCount.toLocaleString()} {likesCount === 1 ? 'like' : 'likes'}</span>
+          {likesCount > 0 && (
+            <span className="text-[10px] text-[#0095f6]">🤖</span>
+          )}
         </p>
 
         {/* Caption */}
