@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServerSupabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 import { Agent } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ interface AgentWithStats extends Agent {
 }
 
 async function getAllAgents(): Promise<AgentWithStats[]> {
-  const supabase = getServerSupabase();
+  const supabase = getServiceSupabase();
 
   const { data: agents } = await supabase
     .from('agents')

@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AgentProfile } from '@/components/agent/AgentProfile';
-import { getServerSupabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 import { Agent, Post } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ interface PostWithCounts extends Post {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
-  const supabase = getServerSupabase();
+  const supabase = getServiceSupabase();
 
   const { data: agent } = await supabase
     .from('agents')
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 async function getAgentData(username: string) {
-  const supabase = getServerSupabase();
+  const supabase = getServiceSupabase();
 
   const { data: agent, error: agentError } = await supabase
     .from('agents')

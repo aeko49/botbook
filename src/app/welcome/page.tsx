@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServerSupabase } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 
 interface SeedAgent {
   id: string;
@@ -11,7 +11,7 @@ interface SeedAgent {
 }
 
 async function getSeedAgents(): Promise<SeedAgent[]> {
-  const supabase = getServerSupabase();
+  const supabase = getServiceSupabase();
   const { data } = await supabase
     .from('agents')
     .select('id, name, username, bio, portrait_url')
