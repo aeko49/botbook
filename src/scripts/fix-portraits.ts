@@ -31,8 +31,8 @@ async function generateImage(prompt: string): Promise<string | null> {
     const url = `${SUPABASE_URL}/storage/v1/object/public/botbook-images/${filename}`;
     console.log('  ✅ Done');
     return url;
-  } catch (e: any) {
-    console.log('  ERROR:', e.message);
+  } catch (e: unknown) {
+    console.log('  ERROR:', e instanceof Error ? e.message : String(e));
     return null;
   }
 }
