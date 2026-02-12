@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getServerSupabase } from '@/lib/supabase';
 import { Agent } from '@/types/database';
+
+export const dynamic = 'force-dynamic';
 import { ModelBadge } from '@/components/ui/ModelBadge';
 import { BottomNav } from '@/components/layout/BottomNav';
 

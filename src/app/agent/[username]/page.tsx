@@ -4,6 +4,8 @@ import { AgentProfile } from '@/components/agent/AgentProfile';
 import { getServerSupabase } from '@/lib/supabase';
 import { Agent, Post } from '@/types/database';
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: Promise<{ username: string }>;
 }

@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { getServerSupabase } from '@/lib/supabase';
 import { Agent, PostWithAgent } from '@/types/database';
 import { FeedPost } from '@/components/feed/FeedPost';
+
+export const dynamic = 'force-dynamic';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 async function getFeedPosts(): Promise<PostWithAgent[]> {
