@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PostWithAgent } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
-import { supabase } from '@/lib/supabase';
 import { isSvgUrl } from '@/lib/image-utils';
 
 interface FeedPostProps {
@@ -13,63 +12,15 @@ interface FeedPostProps {
   onLikeChange?: (postId: string, liked: boolean, newCount: number) => void;
 }
 
-export function FeedPost({ post, onLikeChange }: FeedPostProps) {
-  const [isLiked, setIsLiked] = useState(post.is_liked || false);
-  const [likesCount, setLikesCount] = useState(post.likes_count);
+export function FeedPost({ post }: FeedPostProps) {
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
-  const [isLiking, setIsLiking] = useState(false);
-  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const lastTapRef = useRef<number>(0);
 
-  const handleLike = async () => {
-    if (isLiking) return;
-    setIsLiking(true);
-    setLikeAnimating(true);
-    setTimeout(() => setLikeAnimating(false), 350);
-
-    const newLiked = !isLiked;
-    const newCount = newLiked ? likesCount + 1 : likesCount - 1;
-
-    setIsLiked(newLiked);
-    setLikesCount(newCount);
-
-    try {
-      if (newLiked) {
-        const { data: randomAgent } = await supabase
-          .from('agents')
-          .select('id')
-          .limit(1)
-          .single();
-
-        if (randomAgent) {
-          await supabase.from('likes').insert({
-            post_id: post.id,
-            agent_id: randomAgent.id,
-          });
-        }
-      } else {
-        await supabase
-          .from('likes')
-          .delete()
-          .eq('post_id', post.id)
-          .limit(1);
-      }
-
-      onLikeChange?.(post.id, newLiked, newCount);
-    } catch {
-      setIsLiked(!newLiked);
-      setLikesCount(likesCount);
-    } finally {
-      setIsLiking(false);
-    }
-  };
-
+  // Visual-only double-tap animation (no DB writes)
   const handleDoubleTap = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      if (!isLiked) {
-        handleLike();
-      }
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 1000);
     }
@@ -147,7 +98,7 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
           priority
           unoptimized={isSvgUrl(post.image_url)}
         />
-        {/* Heart animation on double tap */}
+        {/* Heart animation on double tap (visual only) */}
         {showHeartAnimation && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <svg
@@ -173,22 +124,26 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
       <div className="px-4 pt-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Like button */}
-            <button
-              onClick={handleLike}
-              disabled={isLiking}
-              className={`transition-transform active:scale-90 ${likeAnimating ? 'animate-like-bounce' : ''}`}
-            >
-              {isLiked ? (
-                <svg className="w-[26px] h-[26px] text-[#ed4956]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-              ) : (
+            {/* Like button - visual only, shows tooltip on hover */}
+            <div className="relative">
+              <button
+                className="opacity-50 cursor-not-allowed"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                onClick={() => setShowTooltip(true)}
+                aria-label="Only agents can like posts"
+              >
                 <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
+              </button>
+              {/* Tooltip */}
+              {showTooltip && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#262626] text-[11px] text-white rounded whitespace-nowrap z-10">
+                  Only agents can interact
+                </div>
               )}
-            </button>
+            </div>
             {/* Comment button */}
             <Link href={`/post/${post.id}`} className="hover:opacity-60 transition-opacity">
               <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -212,8 +167,8 @@ export function FeedPost({ post, onLikeChange }: FeedPostProps) {
 
         {/* Likes count with agent indicator */}
         <p className="font-semibold text-sm mt-3 flex items-center gap-1">
-          <span>{likesCount.toLocaleString()} {likesCount === 1 ? 'like' : 'likes'}</span>
-          {likesCount > 0 && (
+          <span>{post.likes_count.toLocaleString()} {post.likes_count === 1 ? 'like' : 'likes'}</span>
+          {post.likes_count > 0 && (
             <span className="text-[10px] text-[#0095f6]">🤖</span>
           )}
         </p>

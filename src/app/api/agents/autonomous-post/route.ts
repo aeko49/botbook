@@ -7,16 +7,26 @@ import {
   getDiceBearFallback,
 } from '@/lib/image-generation';
 import { generatePostIdea } from '@/lib/agent-brain';
-import { Agent } from '@/types/database';
+import { authenticateRequest } from '@/lib/api-auth';
 
 /**
  * Generate a single autonomous post for an agent
  *
  * POST /api/agents/autonomous-post
  * Body: { agentId: string }
+ * Requires: Bearer token authentication
  */
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate the request
+    const authResult = await authenticateRequest(request);
+    if (!authResult.success) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+
     const { agentId } = await request.json();
 
     if (!agentId) {
@@ -26,26 +36,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getServiceSupabase();
-
-    const { data: agent, error: fetchError } = await supabase
-      .from('agents')
-      .select('*')
-      .eq('id', agentId)
-      .single();
-
-    if (fetchError || !agent) {
+    // Verify the authenticated agent matches the requested agentId
+    if (authResult.agent.id !== agentId) {
       return NextResponse.json(
-        { error: 'Agent not found' },
-        { status: 404 }
+        { error: 'You can only create posts for your own agent' },
+        { status: 403 }
       );
     }
 
+    const supabase = getServiceSupabase();
+
     // Agent's brain generates the post idea
-    const idea = await generatePostIdea(agent as Agent);
+    const idea = await generatePostIdea(authResult.agent);
 
     // Build the image prompt
-    const prompt = buildPostPrompt(idea.description, agent.personality);
+    const prompt = buildPostPrompt(idea.description, authResult.agent.personality);
 
     let imageUrl: string;
     let imageGenerated = false;
@@ -75,10 +80,10 @@ export async function POST(request: NextRequest) {
         imageGenerated = true;
       } catch (genError) {
         console.error('Image generation failed:', genError);
-        imageUrl = getDiceBearFallback(`${agent.username}-${Date.now()}`, 'post');
+        imageUrl = getDiceBearFallback(`${authResult.agent.username}-${Date.now()}`, 'post');
       }
     } else {
-      imageUrl = getDiceBearFallback(`${agent.username}-${Date.now()}`, 'post');
+      imageUrl = getDiceBearFallback(`${authResult.agent.username}-${Date.now()}`, 'post');
     }
 
     // Create the post

@@ -12,6 +12,30 @@ interface RegisterAgentRequest {
   personality: string;
 }
 
+// Reserved usernames that cannot be registered
+const RESERVED_USERNAMES = new Set([
+  'admin',
+  'api',
+  'system',
+  'botbook',
+  'null',
+  'undefined',
+  'create',
+  'explore',
+  'activity',
+  'welcome',
+  'post',
+  'agent',
+  'agents',
+  'skill',
+  'settings',
+  'help',
+  'support',
+  'root',
+  'moderator',
+  'mod',
+]);
+
 // Map common model providers/names to our ModelSpecies enum
 function mapToModelSpecies(provider: string, name: string): ModelSpecies {
   const combined = `${provider}/${name}`.toLowerCase();
@@ -53,6 +77,14 @@ export async function POST(request: NextRequest) {
     if (handle.length < 3 || handle.length > 30) {
       return NextResponse.json(
         { error: 'Handle must be between 3 and 30 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Check reserved usernames
+    if (RESERVED_USERNAMES.has(handle.toLowerCase())) {
+      return NextResponse.json(
+        { error: 'This handle is reserved and cannot be used' },
         { status: 400 }
       );
     }

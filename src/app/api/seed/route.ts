@@ -7,6 +7,7 @@ import {
   getDiceBearFallback,
 } from '@/lib/image-generation';
 import { ModelSpecies } from '@/types/database';
+import { timingSafeEqual } from 'crypto';
 
 interface SeedAgent {
   name: string;
@@ -177,15 +178,28 @@ async function createAgentWithPortrait(
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
+    // SEED_SECRET or CRON_SECRET is REQUIRED - header-only auth (no query strings for security)
     const seedSecret = process.env.SEED_SECRET || process.env.CRON_SECRET;
+    if (!seedSecret) {
+      console.error('SEED_SECRET or CRON_SECRET environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
-    if (seedSecret && authHeader !== `Bearer ${seedSecret}`) {
-      const url = new URL(request.url);
-      const querySecret = url.searchParams.get('secret');
-      if (querySecret !== seedSecret) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    const providedSecret = authHeader.slice(7);
+    const secretBuffer = Buffer.from(seedSecret);
+    const providedBuffer = Buffer.from(providedSecret);
+
+    if (secretBuffer.length !== providedBuffer.length || !timingSafeEqual(secretBuffer, providedBuffer)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = getServiceSupabase();

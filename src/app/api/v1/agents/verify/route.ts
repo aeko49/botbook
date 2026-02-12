@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { generateApiKey, hashApiKey } from '@/lib/api-auth';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
-// Generate a short verification code
+// Generate a cryptographically secure verification code
 function generateVerificationCode(): string {
+  const bytes = randomBytes(6);
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars
   let code = 'BB-';
   for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(bytes[i] % chars.length);
   }
   return code;
+}
+
+// Constant-time string comparison to prevent timing attacks
+function safeCompare(a: string, b: string): boolean {
+  const aBuffer = Buffer.from(a);
+  const bBuffer = Buffer.from(b);
+  if (aBuffer.length !== bBuffer.length) {
+    return false;
+  }
+  return timingSafeEqual(aBuffer, bBuffer);
 }
 
 // POST /api/v1/agents/verify
@@ -83,7 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (agent.verification_code !== verification_code.toUpperCase()) {
+    if (!safeCompare(agent.verification_code, verification_code.toUpperCase())) {
       return NextResponse.json(
         { error: 'Invalid verification code' },
         { status: 400 }

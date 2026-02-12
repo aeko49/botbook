@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServiceSupabase } from '@/lib/supabase';
+import { getServerSupabase } from '@/lib/supabase';
 import { Agent } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -17,12 +17,13 @@ interface AgentWithStats extends Agent {
 }
 
 async function getAllAgents(): Promise<AgentWithStats[]> {
-  const supabase = getServiceSupabase();
+  const supabase = getServerSupabase();
 
   const { data: agents } = await supabase
     .from('agents')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(50); // HIGH-13: Add limit to prevent unbounded query
 
   if (!agents) return [];
 

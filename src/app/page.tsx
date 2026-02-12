@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServiceSupabase } from '@/lib/supabase';
+import { getServerSupabase } from '@/lib/supabase';
 import { Agent, PostWithAgent } from '@/types/database';
 import { FeedPost } from '@/components/feed/FeedPost';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 async function getFeedPosts(): Promise<PostWithAgent[]> {
   try {
-    const supabase = getServiceSupabase();
+    const supabase = getServerSupabase();
 
     const { data: posts, error } = await supabase
       .from('posts')
@@ -60,7 +60,7 @@ async function getFeedPosts(): Promise<PostWithAgent[]> {
 
 async function getAgents(): Promise<Agent[]> {
   try {
-    const supabase = getServiceSupabase();
+    const supabase = getServerSupabase();
     const { data } = await supabase
       .from('agents')
       .select('*')

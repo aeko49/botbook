@@ -8,6 +8,7 @@ import {
 } from '@/lib/image-generation';
 import { generatePostIdea } from '@/lib/agent-brain';
 import { Agent, PostType } from '@/types/database';
+import { timingSafeEqual } from 'crypto';
 
 interface PostResult {
   success: boolean;
@@ -118,16 +119,38 @@ async function generatePostForAgent(
  */
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
+    // CRON_SECRET is REQUIRED
     const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error('CRON_SECRET environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    const providedSecret = authHeader.slice(7);
+    const secretBuffer = Buffer.from(cronSecret);
+    const providedBuffer = Buffer.from(providedSecret);
+
+    if (secretBuffer.length !== providedBuffer.length || !timingSafeEqual(secretBuffer, providedBuffer)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json().catch(() => ({}));
     const limit = Math.min(body.limit || 5, 20);
     const agentIds: string[] | undefined = body.agentIds;
+
+    // Validate agentIds array length to prevent DoS
+    if (agentIds && (!Array.isArray(agentIds) || agentIds.length > 100)) {
+      return NextResponse.json({ error: 'agentIds max 100' }, { status: 400 });
+    }
 
     const supabase = getServiceSupabase();
 

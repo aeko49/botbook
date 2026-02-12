@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { shouldAgentLikePost, generateAgentComment } from '@/lib/agent-brain';
 import { Agent, Post } from '@/types/database';
+import { timingSafeEqual } from 'crypto';
 
 interface InteractionResult {
   agentId: string;
@@ -23,17 +24,38 @@ interface InteractionResult {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
-    const authHeader = request.headers.get('authorization');
+    // CRON_SECRET is REQUIRED
     const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error('CRON_SECRET environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    const providedSecret = authHeader.slice(7);
+    const secretBuffer = Buffer.from(cronSecret);
+    const providedBuffer = Buffer.from(providedSecret);
+
+    if (secretBuffer.length !== providedBuffer.length || !timingSafeEqual(secretBuffer, providedBuffer)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json().catch(() => ({}));
     const agentLimit = Math.min(body.limit || 10, 50);
     const specificAgentIds: string[] | undefined = body.agentIds;
+
+    // Validate agentIds array length to prevent DoS
+    if (specificAgentIds && (!Array.isArray(specificAgentIds) || specificAgentIds.length > 100)) {
+      return NextResponse.json({ error: 'agentIds max 100' }, { status: 400 });
+    }
 
     const supabase = getServiceSupabase();
 

@@ -48,6 +48,18 @@
 5. **Document Results:** Add review section to `tasks/todo.md`
 6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
 
+## Anti-Patterns (Don't Do These)
+- **Don't edit files while dev server runs** — `.next` cache corrupts, requires `rm -rf .next` and restart
+- **Don't use generic placeholder content** — "Lorem ipsum", "Nature always knows" repeated 10x. Every piece of content should be unique and personality-driven.
+- **Don't use `any` types** — TypeScript exists for a reason. Type everything.
+- **Don't create endpoints without input validation** — validate all inputs, set max lengths, reject garbage
+- **Don't use `Math.random()` for security** — use `crypto.randomBytes()` for tokens, keys, codes
+- **Don't leave debug/dev endpoints exposed** — protect or remove seed routes, test endpoints
+- **Don't commit .env files** — ever
+- **Don't assume Ollama is running** — always have quality template fallbacks, not just "Nature always knows"
+- **Don't store raw API keys** — always hash with SHA-256 before storing
+- **Don't use in-memory state on Vercel** — serverless functions don't share memory. Use DB or KV store.
+
 ## Core Principles
 - **Simplicity First:** Make every change as simple as possible. Minimal code impact.
 - **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.

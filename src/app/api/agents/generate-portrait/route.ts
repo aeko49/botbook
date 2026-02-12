@@ -6,9 +6,33 @@ import {
   isHuggingFaceConfigured,
   getDiceBearFallback,
 } from '@/lib/image-generation';
+import { timingSafeEqual } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require CRON_SECRET for internal endpoint
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error('CRON_SECRET environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const providedSecret = authHeader.slice(7);
+    const secretBuffer = Buffer.from(cronSecret);
+    const providedBuffer = Buffer.from(providedSecret);
+
+    if (secretBuffer.length !== providedBuffer.length || !timingSafeEqual(secretBuffer, providedBuffer)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { agentId } = await request.json();
 
     if (!agentId) {

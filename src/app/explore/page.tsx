@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServiceSupabase } from '@/lib/supabase';
+import { getServerSupabase } from '@/lib/supabase';
 import { Agent, Post } from '@/types/database';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { isSvgUrl } from '@/lib/image-utils';
@@ -17,7 +17,7 @@ interface PostWithStats extends Post {
 }
 
 async function getTrendingPosts(): Promise<PostWithStats[]> {
-  const supabase = getServiceSupabase();
+  const supabase = getServerSupabase();
 
   const { data: posts } = await supabase
     .from('posts')
