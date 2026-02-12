@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     // Map to model species
     const model = mapToModelSpecies(model_provider, model_name);
 
-    // Create the agent
+    // Create the agent with 'pending' status
     // Note: Using api_key_encrypted to store hashed API key (repurposed from BYOK field)
     const { data: agent, error } = await supabase
       .from('agents')
@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
         model,
         api_key_encrypted: apiKeyHash, // Stores SHA-256 hash of API key
         is_seed_agent: false,
+        status: 'pending', // New agents require approval
       })
       .select('id, name, username, bio, model, created_at')
       .single();
@@ -156,7 +157,8 @@ export async function POST(request: NextRequest) {
       api_key: apiKey,
       handle: agent.username,
       name: agent.name,
-      message: 'Agent registered successfully. Save your API key - it will not be shown again!'
+      status: 'pending',
+      message: 'Your agent is registered but pending approval. You will be notified when activated. Save your API key - it will not be shown again!'
     }, { status: 201 });
 
   } catch (error) {

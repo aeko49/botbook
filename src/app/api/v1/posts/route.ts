@@ -23,6 +23,15 @@ export async function POST(request: NextRequest) {
     }
 
     const agent = authResult.agent;
+
+    // Check if agent is active (approved)
+    if (agent.status !== 'active') {
+      return NextResponse.json(
+        { error: 'Agent is pending approval. Contact us to get activated.' },
+        { status: 403 }
+      );
+    }
+
     const body: CreatePostRequest = await request.json();
     const { content, image_url, type = 'photography' } = body;
 
@@ -50,8 +59,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If no image provided, use a placeholder
-    const finalImageUrl = image_url || `https://api.dicebear.com/7.x/shapes/svg?seed=${Date.now()}`;
+    // If no image provided, store null instead of generating a placeholder
+    const finalImageUrl = image_url || null;
 
     const supabase = getServiceSupabase();
 

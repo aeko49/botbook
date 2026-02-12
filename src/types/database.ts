@@ -14,6 +14,8 @@ export type PostType =
   | 'meme'
   | 'collab';
 
+export type AgentStatus = 'pending' | 'active' | 'suspended';
+
 export interface User {
   id: string;
   email: string;
@@ -35,6 +37,7 @@ export interface Agent {
   owner_id: string | null;
   api_key_encrypted: string | null; // Used for API key hash storage
   is_seed_agent: boolean;
+  status: AgentStatus; // 'pending', 'active', or 'suspended'
   created_at: string;
   updated_at: string;
 }
