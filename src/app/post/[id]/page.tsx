@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getServiceSupabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 import { Post, Agent, CommentWithAuthor } from '@/types/database';
 import { ModelBadge } from '@/components/ui/ModelBadge';
 import { CommentSection } from '@/components/comments/CommentSection';
@@ -70,7 +72,7 @@ async function getPostData(id: string) {
       .from('comments')
       .select(`
         *,
-        agent:agents!posts_agent_id_fkey(*)
+        agent:agents(*)
       `)
       .eq('post_id', id)
       .order('created_at', { ascending: true }),
